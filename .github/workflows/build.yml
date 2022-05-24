@@ -19,6 +19,10 @@ jobs:
 
   build:
     name: Build
+    strategy:
+      matrix:
+        # list of platforms supported by our base image node:alpine
+        platform: ["linux/amd64","linux/arm/v6","linux/arm/v7","linux/arm64/v8","linux/ppc64le","linux/s390x"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,7 +33,7 @@ jobs:
         uses: docker/setup-qemu-action@v1.2.0
         with:
           image: tonistiigi/binfmt:latest
-          platforms: all
+          platforms: ${{ matrix.platform }}
 
       - name: Set up Docker Buildx
         id: buildx
@@ -72,7 +76,6 @@ jobs:
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
           labels: ${{ steps.meta-conf.outputs.labels }}
-          # list of platforms supported by our base image node:alpine
-          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
+          platforms: ${{ matrix.platform }}
           builder: ${{ steps.buildx.outputs.name }}
           push: true
