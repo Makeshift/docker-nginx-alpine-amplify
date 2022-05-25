@@ -72,7 +72,7 @@ jobs:
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
           labels: ${{ steps.meta-conf.outputs.labels }}
-          # list of platforms supported by our base image node:alpine
+          # list of platforms supported by our base image nginx:alpine
           platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
           builder: ${{ steps.buildx.outputs.name }}
           push: true
