@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: "0 0 * * 0"
 
+env:
+  RUNS_ON_SELF_HOSTED: ["self-hosted", "Linux"]
+  RUNS_ON_GITHUB: "ubuntu-latest"
+
 jobs:
   cancel_redundant:
     runs-on: ubuntu-latest
@@ -21,17 +25,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check if self-hosted runner is available with given tags
-        uses: actions/github-script@v6
-        id: check-self-hosted
+        uses: octokit/request-action@v2.1.0
+        id: check_self_hosted
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_READ_TOKEN }}
         with:
-          github-token: ${{ secrets.REPO_READ_TOKEN }}
-          script: |
-            github.request('GET /repos/{owner}/{repo}/actions/runners', {
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            })
+          route: GET /repos/{owner}/{repo}/actions/runners
+          owner: ${{ github.repository.owner }}
+          repo: ${{ github.repository.name }}
+
       - name: Log output
-        run: echo "${{ steps.check-self-hosted.outputs.result }}"
+        run: echo "${{ steps.check_self_hosted.outputs.data }}"
   # build:
   #   name: Build
   #   runs-on: ubuntu-latest
