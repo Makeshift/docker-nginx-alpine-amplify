@@ -17,62 +17,76 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-  build:
-    name: Build
+  check_self_hosted:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Check if self-hosted runner is available with given tags
+        uses: https://github.com/actions/github-script
+        id: check-self-hosted
+        with:
+          script: |
+            github.request('GET /repos/{owner}/{repo}/actions/runners', {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            })
+      - name: Log output
+        run: echo "{{ steps.check-self-hosted.outputs }}"
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
 
-      - name: Set up QEMU
-        id: qemu
-        uses: docker/setup-qemu-action@v1.2.0
-        with:
-          image: tonistiigi/binfmt:latest
-          platforms: all
+  #     - name: Set up QEMU
+  #       id: qemu
+  #       uses: docker/setup-qemu-action@v1.2.0
+  #       with:
+  #         image: tonistiigi/binfmt:latest
+  #         platforms: all
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1.6.0
-        with:
-          buildkitd-flags: --debug
+  #     - name: Set up Docker Buildx
+  #       id: buildx
+  #       uses: docker/setup-buildx-action@v1.6.0
+  #       with:
+  #         buildkitd-flags: --debug
 
-      - name: Inspect builder
-        run: |
-          echo "Name:      ${{ steps.buildx.outputs.name }}"
-          echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
-          echo "Status:    ${{ steps.buildx.outputs.status }}"
-          echo "Flags:     ${{ steps.buildx.outputs.flags }}"
-          echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
-      - name: Login to DockerHub
-        if: success() && github.event_name != 'pull_request'
-        uses: docker/login-action@v1.14.1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Inspect builder
+  #       run: |
+  #         echo "Name:      ${{ steps.buildx.outputs.name }}"
+  #         echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
+  #         echo "Status:    ${{ steps.buildx.outputs.status }}"
+  #         echo "Flags:     ${{ steps.buildx.outputs.flags }}"
+  #         echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
+  #     - name: Login to DockerHub
+  #       if: success() && github.event_name != 'pull_request'
+  #       uses: docker/login-action@v1.14.1
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # nginx-alpine-amplify
-      - name: Docker meta (nginx-alpine-amplify)
-        id: meta-conf
-        uses: docker/metadata-action@v3.7.0
-        with:
-          images: makeshift27015/nginx-alpine-amplify
-          tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
-            type=sha,prefix=
-            type=sha,prefix=,format=long
-            # set latest tag for master branch
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
-      - name: Push Container (nginx-alpine-amplify)
-        if: success() && github.event_name != 'pull_request'
-        uses: docker/build-push-action@v2.10.0
-        with:
-          tags: ${{ steps.meta-conf.outputs.tags }}
-          labels: ${{ steps.meta-conf.outputs.labels }}
-          # list of platforms supported by our base image nginx:alpine
-          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
-          builder: ${{ steps.buildx.outputs.name }}
-          push: true
+  #     # nginx-alpine-amplify
+  #     - name: Docker meta (nginx-alpine-amplify)
+  #       id: meta-conf
+  #       uses: docker/metadata-action@v3.7.0
+  #       with:
+  #         images: makeshift27015/nginx-alpine-amplify
+  #         tags: |
+  #           type=schedule
+  #           type=ref,event=branch
+  #           type=ref,event=tag
+  #           type=ref,event=pr
+  #           type=sha,prefix=
+  #           type=sha,prefix=,format=long
+  #           # set latest tag for master branch
+  #           type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+  #     - name: Push Container (nginx-alpine-amplify)
+  #       if: success() && github.event_name != 'pull_request'
+  #       uses: docker/build-push-action@v2.10.0
+  #       with:
+  #         tags: ${{ steps.meta-conf.outputs.tags }}
+  #         labels: ${{ steps.meta-conf.outputs.labels }}
+  #         # list of platforms supported by our base image nginx:alpine
+  #         platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
+  #         builder: ${{ steps.buildx.outputs.name }}
+  #         push: true
