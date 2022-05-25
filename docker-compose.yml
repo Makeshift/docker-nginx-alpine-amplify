@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 services:
   nginx:
     image: makeshift27015/nginx-alpine-amplify
@@ -7,3 +7,5 @@ services:
     environment:
       - API_KEY=${API_KEY} # Replace with yours
       - AMPLIFY_IMAGENAME=${AMPLIFY_IMAGENAME} # Replace with yours
+    volumes:
+      - ./nginx.conf.example:/etc/nginx/nginx.conf

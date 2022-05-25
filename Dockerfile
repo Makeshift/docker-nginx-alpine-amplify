@@ -8,7 +8,10 @@ RUN apk add --no-cache expect build-base python3-dev && \
 	./install-amplify.sh && \
 	apk del expect build-base python3-dev git gcc musl-dev linux-headers  && \
 	rm -rf /nginx-amplify-agent && \
-	find /usr/lib/python3.9 | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf
+	find /usr/lib/python3.9 | grep -E "(/__pycache__$|\.pyc$|\.pyo$)" | xargs rm -rf && \
+	rm -f /var/log/nginx/access.log /var/log/nginx/error.log && \
+	ln -s /dev/stdout /var/log/nginx/access-stdout.log && \
+	ln -s /dev/stderr /var/log/nginx/error-stderr.log
 
 COPY stub_status.conf entrypoint.sh /
 

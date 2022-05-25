@@ -9,4 +9,6 @@ API_KEY
 AMPLIFY_IMAGENAME
 ```
 
+See `nginx.conf.example` for an example nginx.conf that provides all needed logs to the Amplify agent, plus continues to output to `stdout`.
+
 Check `docker-compose.yml` for an example of providing env vars to enable Amplify.

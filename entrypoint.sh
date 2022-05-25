@@ -20,8 +20,6 @@ nginx_status_conf="/etc/nginx/conf.d/stub_status.conf"
 api_key=""
 amplify_imagename=""
 
-cp /stub_status.conf /etc/nginx/conf.d/stub_status.conf
-
 # Launch nginx
 echo "starting nginx ..."
 nginx -g "daemon off;" &
