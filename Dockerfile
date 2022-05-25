@@ -13,7 +13,8 @@ RUN apk add --no-cache expect build-base python3-dev && \
 	ln -s /dev/stdout /var/log/nginx/access-stdout.log && \
 	ln -s /dev/stderr /var/log/nginx/error-stderr.log
 
-COPY stub_status.conf entrypoint.sh /
+COPY entrypoint.sh /
+COPY nginx.conf.example /etc/nginx/nginx.conf
 
 EXPOSE 80
 
