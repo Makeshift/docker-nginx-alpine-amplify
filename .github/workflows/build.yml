@@ -9,7 +9,7 @@ on:
     - cron: "0 0 * * 0"
 
 env:
-  RUNS_ON_SELF_HOSTED: ["self-hosted", "Linux"]
+  RUNS_ON_SELF_HOSTED: "self-hosted, Linux"
   RUNS_ON_GITHUB: "ubuntu-latest"
 
 jobs:
