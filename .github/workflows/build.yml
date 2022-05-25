@@ -31,7 +31,7 @@ jobs:
               repo: context.repo.repo
             })
       - name: Log output
-        run: echo "{{ steps.check-self-hosted.outputs }}"
+        run: echo "${{ steps.check-self-hosted.outputs.result }}"
   # build:
   #   name: Build
   #   runs-on: ubuntu-latest
