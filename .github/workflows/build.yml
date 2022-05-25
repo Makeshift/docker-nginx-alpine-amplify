@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check if self-hosted runner is available with given tags
-        uses: https://github.com/actions/github-script
+        uses: actions/github-script@v6
         id: check-self-hosted
         with:
           script: |
