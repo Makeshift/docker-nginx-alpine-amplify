@@ -1,6 +1,10 @@
-This is the source for a Docker image containing Nginx running on Alpine, plus the Amplify agent installed.
+The `nginx:alpine` Docker container, + the Nginx Amplify agent.
 
-This is simply the `nginx:alpine` image plus the Amplify agent, and a script that populates the Amplify agent config. I noticed that Nginx didn't really provide that as a prebuilt image, so here it is. If it needs updating, please open an issue.
+## Why
+
+Nginx last updated their prebuilt Nginx+Amplify container in 2017, and it was based on their Debian container, so it was huge.
+
+## Usage
 
 Provide these two env vars to the container to enable Amplify:
 
@@ -13,7 +17,7 @@ See `nginx.conf.example` for an example nginx.conf that provides all needed logs
 
 Check `docker-compose.yml` for a full working example.
 
-# Simple usage
+## Simple usage
 
 ```
 docker run -p 80:80 -e API_KEY=<amplify_api_key> -e AMPLIFY_IMAGENAME=<some_identifier> makeshift27015/nginx-alpine-amplify
