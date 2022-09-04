@@ -4,6 +4,21 @@ The `nginx:alpine` Docker container, + the Nginx Amplify agent.
 
 Nginx last updated their prebuilt Nginx+Amplify container in 2017, and it was based on their Debian container, so it was huge.
 
+This Alpine-based container is quite small and should support the following platforms:
+
+- linux/amd64
+- linux/arm/v6
+- linux/arm/v7
+- linux/arm64/v8
+- linux/ppc64le
+- linux/s390x
+
+## install-source.sh
+
+This script was stolen from the now-deleted old nginxinc/nginx-amplify-agent repo. See readme of [my half-backup](https://github.com/Makeshift/nginx-amplify-agent-v1.7.0-5).
+
+I absolutely could have rewritten it to be better and refactored out the .expect file when they deleted the repo but... eh.
+
 ## Usage
 
 Provide these two env vars to the container to enable Amplify:
