@@ -1,6 +1,7 @@
 #!/usr/bin/expect
 
-set timeout -1
+# One hour is probably long enough to finish the build - way overkill for just the input part of the script though
+set timeout 3600
 
 spawn /install-source.sh
 
