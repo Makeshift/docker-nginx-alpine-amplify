@@ -6,6 +6,7 @@ RUN apk add --no-cache python3-dev alpine-sdk linux-headers curl dpkg grep libff
 
 RUN	python3 -m venv /opt/venv && \
 	source /opt/venv/bin/activate && \
+	pip3 install wheel && \
 	pip3 install setproctitle greenlet gevent requests ujson netifaces pymysql psutil
 
 # Grabs and extracts the latest python version of the amplify agent, approximately
