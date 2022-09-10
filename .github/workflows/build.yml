@@ -20,12 +20,26 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
+  # This dumb job exists because env isn't available in the matrix context, sigh
+  # https://docs.github.com/en/actions/learn-github-actions/expressions#fromjson
+  vars:
+    name: Set Env Vars
+    runs-on: ubuntu-latest
+    outputs:
+      architectures: ${{ fromJson(steps.set.outputs.architectures) }}
+    steps:
+      - name: Set Env Vars
+        id: set
+        run: |
+          echo "::set-output name=architectures::${{ env.architectures }}"
+
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: vars
     strategy:
       matrix:
-        architecture: ${{fromJson(env.architectures)}}
+        architecture: ${{ needs.vars.outputs.architectures }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
