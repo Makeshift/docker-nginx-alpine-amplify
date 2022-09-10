@@ -161,7 +161,8 @@ jobs:
           old_tag: ${{ needs.vars.outputs.final_image_name }}
           new_tag: ${{ matrix.tag }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          # slightly annoyed this uses a password and not a token...
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
   docs:
     name: Update DockerHub Repo Description
@@ -175,7 +176,8 @@ jobs:
         uses: peter-evans/dockerhub-description@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          # slightly annoyed this uses a password and not a token...
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ env.image_repo }}
           readme-filepath: Readme.md
           short-description: "Nginx on Alpine with Amplify included, because Nginx itself doesn't offer that"
