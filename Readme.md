@@ -4,11 +4,11 @@ The `nginx:alpine` Docker container, + the Nginx Amplify agent. [Amplify](https:
 
 ## Nginx removed the source for Nginx Amplify
 
-In June 2022, Nginx removed the source from the https://github.com/nginxinc/nginx-amplify-agent repository for unknown reasons. As such, this container got a little bit more complicated and now has to extract the files from one of their releases, which is a bit annoying. Hopefully they'll reply to https://github.com/nginxinc/nginx-amplify-doc/issues/55 to make this simpler.
+In June 2022, Nginx removed the source from the [nginxinc/nginx-amplify-agent](https://github.com/nginxinc/nginx-amplify-agent) repository for unknown reasons. As such, this container got a little bit more complicated and now has to extract the files from one of their releases, which is a bit annoying. Hopefully they'll reply to [my issue](https://github.com/nginxinc/nginx-amplify-doc/issues/55) to make this simpler.
 
 ## Why does this exist
 
-Nginx last updated their prebuilt Alpine Nginx+Amplify container (https://github.com/nginxinc/docker-nginx-amplify) in 2017 (and I literally can't even find it on Docker Hub anymore). It can no longer be built using that repo due to them removing the source from https://github.com/nginxinc/nginx-amplify-agent. They now only release full packages which are only supported by certain distros, Alpine not included. This repo and image fixes that.
+Nginx last updated their prebuilt [Alpine Nginx+Amplify container](https://github.com/nginxinc/docker-nginx-amplify/) in 2017 (and I literally can't even find it on Docker Hub anymore). It can no longer be built using that repo due to them removing the source from [nginxinc/nginx-amplify-agent](https://github.com/nginxinc/nginx-amplify-agent). They now only release full packages which are only supported by certain distros, Alpine not included. This repo and image fixes that.
 
 This Alpine-based container is reasonably sized at ~131MB, sadly quite a lot larger than the standard `nginx:alpine` (at a slim 22MB). This is largely due to the need for Python and the packages required to get Amplify to run, and I am almost definitely not copying files optimally and would appreciate a PR with advice on it, as my Python skills are lacking.
 
@@ -76,7 +76,7 @@ The Dockerfile does not expose 443 by default and `nginx.conf` is not instructed
 ### Configuring Nginx to retry a single upstream server
 Nginx has an [annoying feature](https://superuser.com/questions/746028/configuring-nginx-to-retry-a-single-upstream-server) that causes it to not retry connections if you're using it as a reverse proxy and only have a single upstream server. This isn't specific to this container, it's just annoying and I want to raise awareness about it.
 
-I have another container https://github.com/Makeshift/nginx-retry-proxy that helps with that :) (shameless plug)
+I have another container [Makeshift/nginx-retry-proxy](https://github.com/Makeshift/nginx-retry-proxy) that helps with that :) (shameless plug)
 
 ## Symlink & Log Shenaningans
 
