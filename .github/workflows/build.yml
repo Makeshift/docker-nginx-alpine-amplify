@@ -183,14 +183,11 @@ jobs:
           echo "final_image_name: ${{ needs.vars.outputs.final_image_name }}"
           echo "image_repo: ${{ env.image_repo }}"
       - name: Retag to ${{ matrix.tag }}
-        uses: Z-M-Huang/docker-retag-curl@0.1.0
-        with:
-          repo: ${{ env.image_repo }}
-          old_tag: ${{ needs.vars.outputs.final_image_name }}
-          new_tag: ${{ matrix.tag }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          # slightly annoyed this uses a password and not a token...
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          CONTENT_TYPE="application/vnd.docker.distribution.manifest.list.v2+json"
+          TOKEN="$(curl -s -u ${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${{ env.image_repo }}:pull,push" | jq --raw-output .token)"
+          curl -s -H "Accept: ${CONTENT_TYPE}" -H "Authorization: Bearer ${TOKEN}" "https://index.docker.io/v2/${{ env.image_repo }}/manifests/${{ needs.vars.outputs.final_image_name }}" > manifest.json
+          curl -X PUT -H "Content-Type: $CONTENT_TYPE" -H "Authorization: Bearer $TOKEN" -d @manifest.json "https://index.docker.io/v2/${{ env.image_repo }}/manifests/${{ matrix.tag }}"
 
   docs:
     name: Update DockerHub Repo Description
