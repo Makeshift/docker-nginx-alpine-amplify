@@ -71,7 +71,7 @@ Or by mounting on top of it with Docker. See the `docker-compose.yml` file for a
 Additionally, by default config is gathered from `/etc/nginx/conf.d/*.conf`, so you can mount additional config files there.
 
 ### TLS Support
-The Dockerfile does not expose 443 by default and `nginx.conf` is not instructed to tell Nginx to listen on it. If you wish to add HTTPS to your websites, the container https://github.com/adferrand/dnsrobocert is really good for automatically obtaining LetsEncrypt certs, but I'm afraid it's up to you to configure Nginx to serve it ;)
+The Dockerfile does not expose 443 by default and `nginx.conf` is not instructed to tell Nginx to listen on it. If you wish to add HTTPS to your websites, the container [adferrand/dnsrobocert](https://github.com/adferrand/dnsrobocert) is really good for automatically obtaining LetsEncrypt certs, but I'm afraid it's up to you to configure Nginx to serve it ;)
 
 ### Configuring Nginx to retry a single upstream server
 Nginx has an [annoying feature](https://superuser.com/questions/746028/configuring-nginx-to-retry-a-single-upstream-server) that causes it to not retry connections if you're using it as a reverse proxy and only have a single upstream server. This isn't specific to this container, it's just annoying and I want to raise awareness about it.
