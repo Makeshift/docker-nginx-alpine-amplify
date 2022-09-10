@@ -2,7 +2,8 @@ name: Build
 
 on:
   push:
-  pull_request:
+    branches:
+      - master
   repository_dispatch:
   workflow_dispatch:
   schedule:
@@ -45,7 +46,7 @@ jobs:
           echo "Flags:     ${{ steps.buildx.outputs.flags }}"
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
       - name: Login to DockerHub
-        if: success() && github.event_name != 'pull_request'
+        if: success()
         uses: docker/login-action@v1.14.1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -68,7 +69,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
 
       - name: Push Container (nginx-alpine-amplify)
-        if: success() && github.event_name != 'pull_request'
+        if: success()
         uses: docker/build-push-action@v2.10.0
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
@@ -82,7 +83,7 @@ jobs:
           pull: true
 
       - name: Update DockerHub Repo Description (nginx-alpine-amplify)
-        if: success() && github.event_name != 'pull_request'
+        if: success()
         uses: peter-evans/dockerhub-description@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
