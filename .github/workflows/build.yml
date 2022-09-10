@@ -111,6 +111,7 @@ jobs:
 
   build_manifest:
     name: Build Final Manifest (nginx-alpine-amplify)
+    if: success()
     needs:
       - build
       - vars
@@ -130,8 +131,6 @@ jobs:
             type=sha,prefix=,format=long
             # set latest tag for master branch
             type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
-
-      - run: echo ${{ needs.vars.outputs.image_list }} && echo ${{ steps.meta-conf.outputs.tags }}
 
       - name: Create and push manifest images
         # This only accepts one tag :/
