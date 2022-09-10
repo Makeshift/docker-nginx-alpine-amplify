@@ -82,6 +82,7 @@ jobs:
           pull: true
 
       - name: Update DockerHub Repo Description (nginx-alpine-amplify)
+        if: success() && github.event_name != 'pull_request'
         uses: peter-evans/dockerhub-description@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
