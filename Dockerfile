@@ -42,6 +42,7 @@ RUN mkdir /var/log/amplify-agent \
 # As of the time of writing, the Alpine amd64 repos have Python 3.10 and the arm64 repos have Python 3.9 (making different folder structures)
 #  So, I'm trying to be a bit more version agnostic (rather than pinning to 3.9) by sticking my packages into a custom site-packages dir 
 #  rather than overwriting stuff that the system Python (or the Amplify Agent) manages.
+# I tried some shenanigans with combining the two directories but it ended up at an identical image size, and this is cleaner anyway.
 ENV PYTHONPATH=/usr/lib/python3-custom/site-packages/:/usr/lib/python3/dist-packages
 
 # The '.' will merge, apparently. I'm not sure if it's a bug or a feature, but it works.

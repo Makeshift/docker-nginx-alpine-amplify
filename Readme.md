@@ -1,6 +1,6 @@
 # Nginx + Amplify Agent in an Alpine Container
 
-The `nginx:alpine` Docker container, + the Nginx Amplify agent.
+The `nginx:alpine` Docker container, + the Nginx Amplify agent. [Amplify](https://amplify.nginx.com/) is Nginx's (currently) free monitoring service for Nginx installations, which shows various stats and can alarm on downtime.
 
 ## Nginx removed the source for Nginx Amplify
 
@@ -10,12 +10,14 @@ In June 2022, Nginx removed the source from the [nginxinc/nginx-amplify-agent](h
 
 Nginx last updated their prebuilt [Alpine Nginx+Amplify container](https://github.com/nginxinc/docker-nginx-amplify/) in 2017 (and I literally can't even find it on Docker Hub anymore). It can no longer be built using that repo due to them removing the source from [nginxinc/nginx-amplify-agent](https://github.com/nginxinc/nginx-amplify-agent). They now only release full packages which are only supported by certain distros, Alpine not included. This repo and image fixes that.
 
-This Alpine-based container is quite small and should support the following platforms:
+This Alpine-based container is reasonably sized at ~131MB, sadly quite a lot larger than the standard `nginx:alpine` (at a slim 22MB). This is largely due to the need for Python and the packages required to get Amplify to run, and I am almost definitely not copying files optimally and would appreciate a PR with advice on it, as my Python skills are lacking.
 
-- linux/amd64
+However, it should support the following platforms:
+
+- linux/amd64 (Confirmed working)
 - linux/arm/v6
 - linux/arm/v7
-- linux/arm64/v8
+- linux/arm64/v8 (Confirmed working)
 - linux/ppc64le
 - linux/s390x
 
