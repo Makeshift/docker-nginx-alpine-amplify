@@ -9,7 +9,7 @@ on:
 
 env:
   # list of platforms supported by our base image nginx:alpine
-  architectures: '"["linux/amd64", "linux/arm/v6", "linux/arm/v7", "linux/arm64/v8", "linux/ppc64le", "linux/s390x"]"'
+  architectures: '[\"linux/amd64\", \"linux/arm/v6\", \"linux/arm/v7\", \"linux/arm64/v8\", \"linux/ppc64le\", \"linux/s390x\"]'
 
 jobs:
   cancel_redundant:
