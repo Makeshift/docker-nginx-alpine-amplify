@@ -128,7 +128,7 @@ jobs:
       #     pull: true
 
   build_manifest:
-    name: Build Final Manifest (${{ env.image_name }})
+    name: Build Final Manifest
     if: success()
     needs:
       - build
@@ -164,7 +164,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
   docs:
-    name: Update DockerHub Repo Description (${{ env.image_name }})
+    name: Update DockerHub Repo Description
     runs-on: ubuntu-latest
     needs: build_manifest
     if: success() && github.ref_name == 'master'
