@@ -69,6 +69,17 @@ jobs:
           echo "::set-output name=architectures::$architectures"
           echo "::set-output name=image_list::$image_list"
           echo "::set-output name=final_image_name::$full_image_prefix"
+  list_vars:
+    name: List Env Vars
+    runs-on: ubuntu-latest
+    needs: vars
+    steps:
+      - name: List Env Vars
+        run: |
+          echo "architectures: ${{ needs.vars.outputs.architectures }}"
+          echo "image_list: ${{ needs.vars.outputs.image_list }}"
+          echo "final_image_name: ${{ needs.vars.outputs.final_image_name }}"
+          echo "final_image_tags: ${{ needs.vars.outputs.final_image_tags }}"
 
   build:
     name: Build
