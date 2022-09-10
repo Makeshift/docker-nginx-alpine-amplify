@@ -21,6 +21,7 @@ jobs:
           access_token: ${{ github.token }}
 
   # This dumb job exists because env isn't available in the matrix context, sigh
+  # At least it lets me do some string manipulation with jq, which is always fun
   # https://docs.github.com/en/actions/learn-github-actions/expressions#fromjson
   vars:
     name: Set Env Vars
@@ -31,7 +32,8 @@ jobs:
       - name: Set Env Vars
         id: set
         run: |
-          echo "::set-output name=architectures::${{ env.architectures }}"
+          architectures=$(echo ${{ env.architectures }} | jq -c 'map({slashed: ., underscored: (. | gsub("(/)";"_"))})')
+          echo "::set-output name=architectures::$architectures"
 
   build:
     name: Build
@@ -78,12 +80,12 @@ jobs:
         with:
           images: makeshift27015/nginx-alpine-amplify
           tags: |
-            type=schedule,suffix=${{ matrix.architecture }}
-            type=ref,event=branch,suffix=${{ matrix.architecture }}
-            type=ref,event=tag,suffix=${{ matrix.architecture }}
-            type=ref,event=pr,suffix=${{ matrix.architecture }}
-            type=sha,prefix=,suffix=${{ matrix.architecture }}
-            type=sha,prefix=,format=long,suffix=${{ matrix.architecture }}
+            type=schedule,suffix=${{ matrix.architecture.underscored }}
+            type=ref,event=branch,suffix=${{ matrix.architecture.underscored }}
+            type=ref,event=tag,suffix=${{ matrix.architecture.underscored }}
+            type=ref,event=pr,suffix=${{ matrix.architecture.underscored }}
+            type=sha,prefix=,suffix=${{ matrix.architecture.underscored }}
+            type=sha,prefix=,format=long,suffix=${{ matrix.architecture.underscored }}
 
       - name: Push Container (nginx-alpine-amplify)
         if: success()
@@ -91,7 +93,7 @@ jobs:
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
           labels: ${{ steps.meta-conf.outputs.labels }}
-          platforms: ${{ matrix.architecture }}
+          platforms: ${{ matrix.architecture.slashed }}
           builder: ${{ steps.buildx.outputs.name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
