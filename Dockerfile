@@ -1,6 +1,6 @@
 FROM nginx:alpine as build
 
-RUN apk add --no-cache python3-dev alpine-sdk linux-headers curl dpkg grep && \
+RUN apk add --no-cache python3-dev alpine-sdk linux-headers curl dpkg grep libffi && \
 	curl -s https://bootstrap.pypa.io/get-pip.py --output get-pip.py && \
 	python3 get-pip.py
 
