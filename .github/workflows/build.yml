@@ -9,6 +9,10 @@ on:
   schedule:
     - cron: "0 0 * * 0"
 
+env:
+  # list of platforms supported by our base image nginx:alpine
+  architectures: '["linux/amd64", "linux/arm/v6", "linux/arm/v7", "linux/arm64/v8", "linux/ppc64le", "linux/s390x"]'
+
 jobs:
   cancel_redundant:
     runs-on: ubuntu-latest
@@ -21,6 +25,9 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: ${{fromJson(env.architectures)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -59,14 +66,12 @@ jobs:
         with:
           images: makeshift27015/nginx-alpine-amplify
           tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
-            type=sha,prefix=
-            type=sha,prefix=,format=long
-            # set latest tag for master branch
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+            type=schedule,suffix=${{ matrix.architecture }}
+            type=ref,event=branch,suffix=${{ matrix.architecture }}
+            type=ref,event=tag,suffix=${{ matrix.architecture }}
+            type=ref,event=pr,suffix=${{ matrix.architecture }}
+            type=sha,prefix=,suffix=${{ matrix.architecture }}
+            type=sha,prefix=,format=long,suffix=${{ matrix.architecture }}
 
       - name: Push Container (nginx-alpine-amplify)
         if: success()
@@ -74,20 +79,37 @@ jobs:
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
           labels: ${{ steps.meta-conf.outputs.labels }}
-          # list of platforms supported by our base image nginx:alpine
-          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
+          platforms: ${{ matrix.architecture }}
           builder: ${{ steps.buildx.outputs.name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
           pull: true
 
-      - name: Update DockerHub Repo Description (nginx-alpine-amplify)
-        if: success()
-        uses: peter-evans/dockerhub-description@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: makeshift27015/nginx-alpine-amplify
-          readme-filepath: Readme.md
-          short-description: "Nginx on Alpine with Amplify included, because Nginx itself doesn't offer that"
+  # build_manifest:
+  #   runs-on: ubuntu-last
+  #   steps:
+  #     - name: Create and push manifest images
+  #       uses: Noelware/docker-manifest-action@master # or use whatever version.
+  #       with:
+  #         base-image: namespace/image:latest
+  #         extra-images: namespace/image:latest-amd64,namespace/image:latest-arm64,namespace/image:latest-armv7
+  #         push: true
+# set latest tag for master branch
+#type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+
+# docs:
+#   name: Build
+#   runs-on: ubuntu-latest
+#   steps:
+#     - name: Checkout
+#       uses: actions/checkout@v2
+#     - name: Update DockerHub Repo Description (nginx-alpine-amplify)
+#       if: success()
+#       uses: peter-evans/dockerhub-description@v2
+#       with:
+#         username: ${{ secrets.DOCKERHUB_USERNAME }}
+#         password: ${{ secrets.DOCKERHUB_PASSWORD }}
+#         repository: makeshift27015/nginx-alpine-amplify
+#         readme-filepath: Readme.md
+#         short-description: "Nginx on Alpine with Amplify included, because Nginx itself doesn't offer that"
