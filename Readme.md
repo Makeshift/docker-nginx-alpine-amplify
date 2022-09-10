@@ -1,8 +1,14 @@
+# Nginx + Amplify Agent in an Alpine Container
+
 The `nginx:alpine` Docker container, + the Nginx Amplify agent.
 
-## Why
+## Nginx removed the source for Nginx Amplify
 
-Nginx last updated their prebuilt Nginx+Amplify container in 2017, and it was based on their Debian container, so it was huge.
+In June 2022, Nginx removed the source from the [nginxinc/nginx-amplify-agent](https://github.com/nginxinc/nginx-amplify-agent) repository for unknown reasons. As such, this container got a little bit more complicated and now has to extract the files from one of their releases, which is a bit annoying. Hopefully they'll reply to [my issue](https://github.com/nginxinc/nginx-amplify-doc/issues/55) to make this simpler.
+
+## Why does this exist
+
+Nginx last updated their prebuilt Nginx+Amplify container in 2017, and it was based on their Debian container, so it was huge. Also, they now only release full packages which are only supported by certain distros, Alpine not included. This fixes that.
 
 This Alpine-based container is quite small and should support the following platforms:
 
@@ -12,12 +18,6 @@ This Alpine-based container is quite small and should support the following plat
 - linux/arm64/v8
 - linux/ppc64le
 - linux/s390x
-
-## install-source.sh
-
-This script was stolen from the now-deleted old nginxinc/nginx-amplify-agent repo. See readme of [my half-backup](https://github.com/Makeshift/nginx-amplify-agent-v1.7.0-5).
-
-I absolutely could have rewritten it to be better and refactored out the .expect file when they deleted the repo but... eh.
 
 ## Usage
 
