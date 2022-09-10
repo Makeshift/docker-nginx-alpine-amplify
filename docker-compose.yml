@@ -9,8 +9,9 @@ services:
       # You can either replace the variables ${} entirely with your own values, or
       #  you can create an .env file in the same directory as this docker-compose.yml to
       #  set the variables there.
-      - API_KEY=${API_KEY} # Replace with yours or make a .env file
-      - AMPLIFY_IMAGENAME=${AMPLIFY_IMAGENAME} # Replace with yours or make a .env file
+      - API_KEY=${API_KEY}
+      - AMPLIFY_IMAGENAME=${AMPLIFY_IMAGENAME}
+      - NO_AGENT_LOGS=${NO_AGENT_LOGS-false}
     volumes:
       # Replace the built-in nginx.conf with your own
       - ./nginx.conf.example:/etc/nginx/nginx.conf

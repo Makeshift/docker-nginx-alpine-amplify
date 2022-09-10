@@ -26,6 +26,10 @@ Provide these two env vars to the container to enable Amplify:
 - `API_KEY` (from the Amplify dashboard)
 - `AMPLIFY_IMAGENAME` (Used to identify this container)
 
+There's an optional env var to disable logs from the Amplify Agent, which contain your API key:
+
+- `NO_AGENT_LOGS=true` (Only accepts 'true')
+
 See `nginx.conf.example` for an example nginx.conf that provides all needed logs to the Amplify agent, plus continues to output to `stdout`. This is bundled into the container by default.
 
 ## Simple usage
@@ -41,6 +45,8 @@ See the `docker-compose.yml` file for a full working example. As an alternative 
 ```properties
 API_KEY=foobarkey
 AMPLIFY_IMAGENAME=foobarservername
+# and optionally
+NO_AGENT_LOGS=true
 ```
 
 ### Done!
