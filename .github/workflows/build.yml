@@ -28,19 +28,30 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       architectures: ${{ steps.set.outputs.architectures }}
+      image_list: ${{ steps.set.outputs.image_list }}
     steps:
+      # Matricies don't support outputting variables from each run in the matrix, so we work out what the
+      #  image tags are going to be in advance and pass them to the build job
+      - name: Docker meta (nginx-alpine-amplify)
+        id: meta-conf
+        uses: docker/metadata-action@v3.7.0
+        with:
+          images: makeshift27015/nginx-alpine-amplify
+          tags: |
+            type=sha,prefix=,format=long
       - name: Set Env Vars
         id: set
         run: |
-          architectures=$(echo ${{ env.architectures }} | jq -c 'map({slashed: ., underscored: (. | gsub("(/)";"_"))})')
+          tag_prefix="${{ steps.meta-conf.outputs.tags[0] }}"
+          architectures=$(echo ${{ env.architectures }} | jq -c --arg tag_prefix "$tag_prefix" 'map({slashed: ., underscored: (. | gsub("(/)";"_")), image_name: ($tag_prefix + "-" + . | gsub("(/)";"_"))})'
+          image_list=$(echo "$architectures" | jq -r '[.[] | .image_name] | join(",")')
           echo "::set-output name=architectures::$architectures"
+          echo "::set-output name=image_list::$image_list"
 
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: vars
-    outputs:
-      image_name: ${{ steps.meta-conf.outputs.tags[0]}}
     strategy:
       matrix:
         architecture: ${{ fromJson(needs.vars.outputs.architectures) }}
@@ -80,7 +91,7 @@ jobs:
         with:
           images: makeshift27015/nginx-alpine-amplify
           tags: |
-            type=sha,prefix=,format=long,suffix=-${{ matrix.architecture.underscored }}
+            type=raw,value=${{ matrix.architecture.image_name }}
 
       - name: Push Container (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
         if: success()
@@ -97,30 +108,35 @@ jobs:
 
   build_manifest:
     name: Build Final Manifest (nginx-alpine-amplify)
-    needs: build
+    needs:
+      - build
+      - vars
     runs-on: ubuntu-latest
     steps:
-      # - name: Docker meta (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
-      #   id: meta-conf
-      #   uses: docker/metadata-action@v3.7.0
-      #   with:
-      #     images: makeshift27015/nginx-alpine-amplify
-      #     tags: |
-      #       type=schedule
-      #       type=ref,event=branch
-      #       type=ref,event=tag
-      #       type=ref,event=pr
-      #       type=sha,prefix=
-      #       type=sha,prefix=,format=long
-      #       # set latest tag for master branch
-      #       type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
-      - run: echo ${{ needs.build.outputs.image_name }}
-      # - name: Create and push manifest images
-      #   uses: Noelware/docker-manifest-action@v0.1.0
-      #   with:
-      #     base-image: makeshift27015/nginx-alpine-amplify:latest
-      #     extra-images: namespace/image:latest-amd64,namespace/image:latest-arm64,namespace/image:latest-armv7
-      #     push: true
+      - name: Docker meta (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
+        id: meta-conf
+        uses: docker/metadata-action@v3.7.0
+        with:
+          images: makeshift27015/nginx-alpine-amplify
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=sha,prefix=
+            type=sha,prefix=,format=long
+            # set latest tag for master branch
+            type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
+
+      - run: echo ${{ needs.vars.outputs.image_list }} && echo ${{ steps.meta-conf.outputs.tags }}
+
+      - name: Create and push manifest images
+        # This only accepts one tag :/
+        uses: Noelware/docker-manifest-action@v0.1.0
+        with:
+          base-image: ${{ steps.meta-conf.outputs.tags[0] }}
+          extra-images: ${{ needs.vars.outputs.image_list }}
+          push: true
 
   docs:
     name: Update DockerHub Repo Description (nginx-alpine-amplify)
