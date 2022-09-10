@@ -3,9 +3,22 @@ services:
   nginx:
     image: makeshift27015/nginx-alpine-amplify
     ports:
+      #
       - "80:80"
     environment:
-      - API_KEY=${API_KEY} # Replace with yours
-      - AMPLIFY_IMAGENAME=${AMPLIFY_IMAGENAME} # Replace with yours
+      # You can either replace the variables ${} entirely with your own values, or
+      #  you can create an .env file in the same directory as this docker-compose.yml to
+      #  set the variables there.
+      - API_KEY=${API_KEY} # Replace with yours or make a .env file
+      - AMPLIFY_IMAGENAME=${AMPLIFY_IMAGENAME} # Replace with yours or make a .env file
     volumes:
+      # Replace the built-in nginx.conf with your own
       - ./nginx.conf.example:/etc/nginx/nginx.conf
+      # Add additional config
+      #  (if your nginx.conf has `include /etc/nginx/conf.d/*.conf;`, the default one does)
+      - ./conf.d/:/etc/nginx/conf.d/
+      # Mount logs to the host - be careful of permissions, it must be owned by the nginx user
+      #  which is ID 101 in this container (inherited from nginx:alpine). 
+      #  You can run `chown 101:101 access.log error.log` to fix it.
+      - ./access.log:/var/log/nginx/access.log
+      - ./error.log:/var/log/nginx/error.log

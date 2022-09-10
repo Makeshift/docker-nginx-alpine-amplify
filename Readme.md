@@ -8,7 +8,7 @@ In June 2022, Nginx removed the source from the [nginxinc/nginx-amplify-agent](h
 
 ## Why does this exist
 
-Nginx last updated their prebuilt Nginx+Amplify container in 2017, and it was based on their Debian container, so it was huge. Also, they now only release full packages which are only supported by certain distros, Alpine not included. This fixes that.
+Nginx last updated their prebuilt [Alpine Nginx+Amplify container](https://github.com/nginxinc/docker-nginx-amplify/) in 2017 (and I literally can't even find it on Docker Hub anymore). It can no longer be built using that repo due to them removing the source from [nginxinc/nginx-amplify-agent](https://github.com/nginxinc/nginx-amplify-agent). They now only release full packages which are only supported by certain distros, Alpine not included. This repo and image fixes that.
 
 This Alpine-based container is quite small and should support the following platforms:
 
@@ -23,19 +23,97 @@ This Alpine-based container is quite small and should support the following plat
 
 Provide these two env vars to the container to enable Amplify:
 
-```
-API_KEY (from the Amplify dashboard)
-AMPLIFY_IMAGENAME (Used to identify this container)
-```
+- `API_KEY` (from the Amplify dashboard)
+- `AMPLIFY_IMAGENAME` (Used to identify this container)
 
-See `nginx.conf.example` for an example nginx.conf that provides all needed logs to the Amplify agent, plus continues to output to `stdout`.
-
-Check `docker-compose.yml` for a full working example.
+See `nginx.conf.example` for an example nginx.conf that provides all needed logs to the Amplify agent, plus continues to output to `stdout`. This is bundled into the container by default.
 
 ## Simple usage
 
-```
+### Docker
+```properties
 docker run -p 80:80 -e API_KEY=<amplify_api_key> -e AMPLIFY_IMAGENAME=<some_identifier> makeshift27015/nginx-alpine-amplify
 ```
 
-then head to the [Amplify dashboard](https://amplify.nginx.com/overview/).
+### Compose
+See the `docker-compose.yml` file for a full working example. As an alternative to hardcoding the env vars into the compose file, you can simply use the variables that are already there and create a `.env` file with the following content:
+
+```properties
+API_KEY=foobarkey
+AMPLIFY_IMAGENAME=foobarservername
+```
+
+### Done!
+
+Once set up, you can then head to the [Amplify dashboard](https://amplify.nginx.com/overview/) and within a few minutes you should start seeing stats!
+
+## Modifying Config
+
+See `nginx.conf.example` in this repo for a full example, which is bundled by default into the container at `/etc/nginx/nginx.conf`. 
+
+This example file can be easily overwritten by extending this container:
+
+```dockerfile
+FROM makeshift27015/nginx-alpine-amplify
+COPY nginx.conf /etc/nginx/nginx.conf
+```
+
+Or by mounting on top of it with Docker. See the `docker-compose.yml` file for an example. 
+
+Additionally, by default config is gathered from `/etc/nginx/conf.d/*.conf`, so you can mount additional config files there.
+
+### TLS Support
+The Dockerfile does not expose 443 by default and `nginx.conf` is not instructed to tell Nginx to listen on it. If you wish to add HTTPS to your websites, the container [`adferrand/dnsrobocert`](https://github.com/adferrand/dnsrobocert) is really good for automatically obtaining LetsEncrypt certs.
+
+### Configuring Nginx to retry a single upstream server
+Nginx has an [annoying feature](https://superuser.com/questions/746028/configuring-nginx-to-retry-a-single-upstream-server) that causes it to not retry connections if you're using it as a reverse proxy and only have a single upstream server. This isn't specific to this container, it's just annoying and I want to raise awareness about it.
+
+I have another container [Makeshift/nginx-retry-proxy](https://github.com/Makeshift/nginx-retry-proxy) that helps with that :) (shameless plug)
+
+## Symlink & Log Shenaningans
+
+In the Dockerfile I specifically symlink `/var/log/nginx/access-stdout.log` and `/var/log/nginx/error-stderr.log` to `/dev/stdout` and `/dev/stderr` respectively.
+This means that if you use your existing Nginx config file, you **will only get output from the Nginx daemon and Amplify Agent by default** (not including lines logged to `access.log` and `error.log`). This is by design so as not to break the Amplify Agent, which relies on the default locations of Nginx logs.
+
+To get Docker logs output, your Nginx config **must** output logs to `/var/log/nginx/access-stdout.log` and `/var/log/nginx/error-stderr.log` in addition to the default locations.
+My `nginx.conf` bundled in the container does this by default, and outputs a (relatively) sane format that looks like this:
+
+```properties
+172.17.0.1 - - [10/Sep/2022:13:36:32 +0000] "GET / HTTP/1.1" 200 615 "" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36" "-" "localhost" sn="localhost" rt=0.000 ua="-" us="-" ut="-" ul="-" cs=-
+```
+
+To correctly configure your install, note specifically these lines in `nginx.conf`:
+
+```nginx
+error_log  /var/log/nginx/error.log warn;
+error_log  /var/log/nginx/error-stderr.log warn;
+```
+
+and
+
+```nginx
+http {
+  ...
+  access_log  /var/log/nginx/access.log  main_ext;
+  access_log  /var/log/nginx/access-stdout.log main_ext;
+  ...
+}
+```
+
+The `main_ext` is because I modify the log output. Nginx's default log name is `main`, so if you aren't using the extended logging that I add, you can simply replace `main_ext` with `main`.
+
+### Mounting logs to the host
+If your sites gets a lot of traffic, your logfiles might start getting pretty big within the container. This can be solved (or at least mitigated) by mounting the default logfiles from the host filesystem. Bear in mind that the Amplify Agent still needs access to them.
+
+#### Docker
+```properties
+docker run -p 80:80 -e API_KEY=<amplify_api_key> -e AMPLIFY_IMAGENAME=<some_identifier> \
+-v $(pwd)/access.log:/var/log/nginx/access.log -v $(pwd)/error.log:/var/log/nginx/error.log \
+makeshift27015/nginx-alpine-amplify
+```
+
+#### Compose
+See the `docker-compose.yml` file for a full working example.
+
+### Hiding your API key / Hiding the Agent logs
+Set the env var `NO_AGENT_LOGS=true`.
