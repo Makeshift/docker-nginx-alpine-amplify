@@ -178,6 +178,10 @@ jobs:
       matrix:
         tag: ${{ fromJson(needs.vars.outputs.final_image_tags) }}
     steps:
+      - run: |
+          echo "matrix.tag: ${{ matrix.tag }}"
+          echo "final_image_name: ${{ needs.vars.outputs.final_image_name }}"
+          echo "image_repo: ${{ env.image_repo }}"
       - name: Retag to ${{ matrix.tag }}
         uses: Z-M-Huang/docker-retag-curl@0.1.0
         with:
