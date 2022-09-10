@@ -39,27 +39,27 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: vars
+    outputs:
+      image_name: ${{ steps.meta-conf.outputs.tags[0]}}
     strategy:
       matrix:
         architecture: ${{ fromJson(needs.vars.outputs.architectures) }}
     steps:
-      - name: Checkout
+      - name: Checkout (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
         uses: actions/checkout@v2
 
-      - name: Set up QEMU
+      - name: Set up QEMU (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
         id: qemu
         uses: docker/setup-qemu-action@v1.2.0
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
 
-      - name: Set up Docker Buildx
+      - name: Set up Docker Buildx (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
         id: buildx
         uses: docker/setup-buildx-action@v1.6.0
-        with:
-          buildkitd-flags: --debug
 
-      - name: Inspect builder
+      - name: Inspect builder (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
         run: |
           echo "Name:      ${{ steps.buildx.outputs.name }}"
           echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
@@ -74,20 +74,15 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # nginx-alpine-amplify
-      - name: Docker meta (nginx-alpine-amplify)
+      - name: Docker meta (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
         id: meta-conf
         uses: docker/metadata-action@v3.7.0
         with:
           images: makeshift27015/nginx-alpine-amplify
           tags: |
-            type=schedule,suffix=${{ matrix.architecture.underscored }}
-            type=ref,event=branch,suffix=${{ matrix.architecture.underscored }}
-            type=ref,event=tag,suffix=${{ matrix.architecture.underscored }}
-            type=ref,event=pr,suffix=${{ matrix.architecture.underscored }}
-            type=sha,prefix=,suffix=${{ matrix.architecture.underscored }}
-            type=sha,prefix=,format=long,suffix=${{ matrix.architecture.underscored }}
+            type=sha,prefix=,format=long,suffix=-${{ matrix.architecture.underscored }}
 
-      - name: Push Container (nginx-alpine-amplify)
+      - name: Push Container (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
         if: success()
         uses: docker/build-push-action@v2.10.0
         with:
@@ -100,30 +95,46 @@ jobs:
           push: true
           pull: true
 
-  # build_manifest:
-  #   runs-on: ubuntu-last
-  #   steps:
-  #     - name: Create and push manifest images
-  #       uses: Noelware/docker-manifest-action@master # or use whatever version.
-  #       with:
-  #         base-image: namespace/image:latest
-  #         extra-images: namespace/image:latest-amd64,namespace/image:latest-arm64,namespace/image:latest-armv7
-  #         push: true
-# set latest tag for master branch
-#type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+  build_manifest:
+    name: Build Final Manifest (nginx-alpine-amplify)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Docker meta (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
+      #   id: meta-conf
+      #   uses: docker/metadata-action@v3.7.0
+      #   with:
+      #     images: makeshift27015/nginx-alpine-amplify
+      #     tags: |
+      #       type=schedule
+      #       type=ref,event=branch
+      #       type=ref,event=tag
+      #       type=ref,event=pr
+      #       type=sha,prefix=
+      #       type=sha,prefix=,format=long
+      #       # set latest tag for master branch
+      #       type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
+      - run: echo ${{ needs.build.outputs.image_name }}
+      # - name: Create and push manifest images
+      #   uses: Noelware/docker-manifest-action@v0.1.0
+      #   with:
+      #     base-image: makeshift27015/nginx-alpine-amplify:latest
+      #     extra-images: namespace/image:latest-amd64,namespace/image:latest-arm64,namespace/image:latest-armv7
+      #     push: true
 
-# docs:
-#   name: Build
-#   runs-on: ubuntu-latest
-#   steps:
-#     - name: Checkout
-#       uses: actions/checkout@v2
-#     - name: Update DockerHub Repo Description (nginx-alpine-amplify)
-#       if: success()
-#       uses: peter-evans/dockerhub-description@v2
-#       with:
-#         username: ${{ secrets.DOCKERHUB_USERNAME }}
-#         password: ${{ secrets.DOCKERHUB_PASSWORD }}
-#         repository: makeshift27015/nginx-alpine-amplify
-#         readme-filepath: Readme.md
-#         short-description: "Nginx on Alpine with Amplify included, because Nginx itself doesn't offer that"
+  docs:
+    name: Update DockerHub Repo Description (nginx-alpine-amplify)
+    runs-on: ubuntu-latest
+    needs: build_manifest
+    if: success() && github.ref_name == 'master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Update DockerHub Repo Description (nginx-alpine-amplify)
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: makeshift27015/nginx-alpine-amplify
+          readme-filepath: Readme.md
+          short-description: "Nginx on Alpine with Amplify included, because Nginx itself doesn't offer that"
