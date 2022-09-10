@@ -72,9 +72,9 @@ jobs:
           echo "::set-output name=architectures::$architectures"
           echo "::set-output name=image_list::$image_list"
           echo "::set-output name=final_image_name::$full_image_prefix"
-          final_image_tags=$(echo ${{ steps.meta-conf.outputs.tags }} | jq -Rsc 'split(",") | [ .[] | select(length > 0) ]')
+          final_image_tags=$(echo ${{ steps.meta-conf.outputs.tags }} | jq -Rc 'split(",") | [ .[] | select(length > 0) ]')
           echo "::set-output name=final_image_tags::$final_image_tags"
-          #final_image_labels=$(echo ${{ steps.meta-conf.outputs.labels }} | jq -Rsc 'split(",") | [ .[] | select(length > 0) ]')
+          #final_image_labels=$(echo ${{ steps.meta-conf.outputs.labels }} | jq -Rc 'split(",") | [ .[] | select(length > 0) ]')
           #echo "::set-output name=final_image_labels::$final_image_labels"
   list_vars:
     name: List Env Vars
