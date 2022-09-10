@@ -26,46 +26,49 @@ nginx -g "daemon off;" &
 
 nginx_pid=$!
 
-test -n "${API_KEY}" && \
+test -n "${API_KEY}" &&
     api_key=${API_KEY}
 
-test -n "${AMPLIFY_IMAGENAME}" && \
+test -n "${AMPLIFY_IMAGENAME}" &&
     amplify_imagename=${AMPLIFY_IMAGENAME}
 
 if [ -n "${api_key}" -o -n "${amplify_imagename}" ]; then
     echo "updating ${agent_conf_file} ..."
 
     if [ ! -f "${agent_conf_file}" ]; then
-	test -f "${agent_conf_file}.default" && \
-	cp -p "${agent_conf_file}.default" "${agent_conf_file}" || \
-	{ echo "no ${agent_conf_file}.default found! exiting."; exit 1; }
+        test -f "${agent_conf_file}.default" &&
+            cp -p "${agent_conf_file}.default" "${agent_conf_file}" ||
+            {
+                echo "no ${agent_conf_file}.default found! exiting."
+                exit 1
+            }
     fi
 
-    test -n "${api_key}" && \
-    echo " ---> using api_key = ${api_key}" && \
-    sh -c "sed -i.old -e 's/api_key.*$/api_key = $api_key/' \
+    test -n "${api_key}" &&
+        echo " ---> using api_key = ${api_key}" &&
+        sh -c "sed -i.old -e 's/api_key.*$/api_key = $api_key/' \
 	${agent_conf_file}"
 
-    test -n "${amplify_imagename}" && \
-    echo " ---> using imagename = ${amplify_imagename}" && \
-    sh -c "sed -i.old -e 's/imagename.*$/imagename = $amplify_imagename/' \
+    test -n "${amplify_imagename}" &&
+        echo " ---> using imagename = ${amplify_imagename}" &&
+        sh -c "sed -i.old -e 's/imagename.*$/imagename = $amplify_imagename/' \
 	${agent_conf_file}"
 
-    test -f "${agent_conf_file}" && \
-    chmod 644 ${agent_conf_file} && \
-    chown nginx ${agent_conf_file} > /dev/null 2>&1
+    test -f "${agent_conf_file}" &&
+        chmod 644 ${agent_conf_file} &&
+        chown nginx ${agent_conf_file} >/dev/null 2>&1
 
-    test -f "${nginx_status_conf}" && \
-    chmod 644 ${nginx_status_conf} && \
-    chown nginx ${nginx_status_conf} > /dev/null 2>&1
+    test -f "${nginx_status_conf}" &&
+        chmod 644 ${nginx_status_conf} &&
+        chown nginx ${nginx_status_conf} >/dev/null 2>&1
 fi
 
-if ! grep '^api_key.*=[ ]*[[:alnum:]].*' ${agent_conf_file} > /dev/null 2>&1; then
+if ! grep '^api_key.*=[ ]*[[:alnum:]].*' ${agent_conf_file} >/dev/null 2>&1; then
     echo "no api_key found in ${agent_conf_file}! exiting."
 fi
 
 echo "starting amplify-agent ..."
-nginx-amplify-agent.py start --config=/etc/amplify-agent/agent.conf > /dev/null 2>&1 < /dev/null
+nginx-amplify-agent.py start --config=/etc/amplify-agent/agent.conf >/dev/null 2>&1 </dev/null
 
 if [ $? != 0 ]; then
     echo "couldn't start the agent, please check ${agent_log_file}"
