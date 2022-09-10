@@ -96,18 +96,18 @@ jobs:
           tags: |
             type=raw,value=${{ matrix.architecture.image_name }}
 
-      - name: Push Container (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
-        if: success()
-        uses: docker/build-push-action@v2.10.0
-        with:
-          tags: ${{ steps.meta-conf.outputs.tags }}
-          labels: ${{ steps.meta-conf.outputs.labels }}
-          platforms: ${{ matrix.architecture.slashed }}
-          builder: ${{ steps.buildx.outputs.name }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
-          pull: true
+      # - name: Push Container (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
+      #   if: success()
+      #   uses: docker/build-push-action@v2.10.0
+      #   with:
+      #     tags: ${{ steps.meta-conf.outputs.tags }}
+      #     labels: ${{ steps.meta-conf.outputs.labels }}
+      #     platforms: ${{ matrix.architecture.slashed }}
+      #     builder: ${{ steps.buildx.outputs.name }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      #     push: true
+      #     pull: true
 
   build_manifest:
     name: Build Final Manifest (nginx-alpine-amplify)
