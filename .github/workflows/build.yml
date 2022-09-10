@@ -32,19 +32,22 @@ jobs:
     steps:
       # Matricies don't support outputting variables from each run in the matrix, so we work out what the
       #  image tags are going to be in advance and pass them to the build job
-      - name: Docker meta (nginx-alpine-amplify)
-        id: meta-conf
-        uses: docker/metadata-action@v3.7.0
-        with:
-          images: makeshift27015/nginx-alpine-amplify
-          tags: |
-            type=sha,prefix=,format=long
       - name: Set Env Vars
         id: set
         run: |
-          tag_prefix="${{ steps.meta-conf.outputs.tags }}"
-          architectures=$(echo ${{ env.architectures }} | jq -c --arg tag_prefix "$tag_prefix" 'map({slashed: ., underscored: (. | gsub("(/)";"_")), image_name: ($tag_prefix + "-" + . | gsub("(/)";"_"))})')
-          image_list=$(echo "$architectures" | jq -r '[.[] | .image_name] | join(",")')
+          tag_prefix="${{ github.sha }}"
+          full_image_prefix="makeshift27015/nginx-alpine-amplify:${tag_prefix}"
+          architectures=$(echo ${{ env.architectures }} | \
+            jq -c --arg tag_prefix "$tag_prefix" --arg full_image_prefix "$full_image_prefix" \
+              'map((. | gsub("(/)";"_")) as $underscored | {
+                slashed: ., 
+                underscored: $underscored, 
+                image_name: ($tag_prefix + "-" + $underscored), 
+                full_image_name: ($full_image_prefix + "-" + $underscored) }
+              )
+            '
+          )
+          image_list=$(echo "$architectures" | jq -r '[.[] | .full_image_name] | join(",")')
           echo "::set-output name=architectures::$architectures"
           echo "::set-output name=image_list::$image_list"
 
@@ -113,7 +116,7 @@ jobs:
       - vars
     runs-on: ubuntu-latest
     steps:
-      - name: Docker meta (nginx-alpine-amplify/${{ matrix.architecture.slashed }})
+      - name: Docker meta for manifest (nginx-alpine-amplify)
         id: meta-conf
         uses: docker/metadata-action@v3.7.0
         with:
