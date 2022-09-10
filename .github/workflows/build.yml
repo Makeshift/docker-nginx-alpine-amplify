@@ -26,7 +26,7 @@ jobs:
     name: Set Env Vars
     runs-on: ubuntu-latest
     outputs:
-      architectures: ${{ fromJson(env.architectures) }}
+      architectures: ${{ fromJson(steps.set.outputs.architectures) }}
     steps:
       - name: Set Env Vars
         id: set
