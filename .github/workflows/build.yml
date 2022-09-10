@@ -43,7 +43,7 @@ jobs:
         id: set
         run: |
           tag_prefix="${{ steps.meta-conf.outputs.tags }}"
-          architectures=$(echo ${{ env.architectures }} | jq -c --arg tag_prefix "$tag_prefix" 'map({slashed: ., underscored: (. | gsub("(/)";"_")), image_name: ($tag_prefix + "-" + . | gsub("(/)";"_"))})'
+          architectures=$(echo ${{ env.architectures }} | jq -c --arg tag_prefix "$tag_prefix" 'map({slashed: ., underscored: (. | gsub("(/)";"_")), image_name: ($tag_prefix + "-" + . | gsub("(/)";"_"))})')
           image_list=$(echo "$architectures" | jq -r '[.[] | .image_name] | join(",")')
           echo "::set-output name=architectures::$architectures"
           echo "::set-output name=image_list::$image_list"
