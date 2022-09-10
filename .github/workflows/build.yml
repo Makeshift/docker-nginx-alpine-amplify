@@ -33,7 +33,7 @@ jobs:
       image_list: ${{ steps.set.outputs.image_list }}
       final_image_name: ${{ steps.set.outputs.final_image_name }}
       final_image_tags: ${{ steps.set.outputs.final_image_tags }}
-      final_image_labels: ${{ steps.set.outputs.final_image_labels }}
+      #final_image_labels: ${{ steps.set.outputs.final_image_labels }}
     steps:
       # Matricies don't support outputting variables from each run in the matrix, so we work out what the
       #  image tags are going to be in advance and pass them to the build job
@@ -74,8 +74,8 @@ jobs:
           echo "::set-output name=final_image_name::$full_image_prefix"
           final_image_tags=$(echo ${{ steps.meta-conf.outputs.tags }} | jq -Rsc 'split(",") | [ .[] | select(length > 0) ]')
           echo "::set-output name=final_image_tags::$final_image_tags"
-          final_image_labels=$(echo ${{ steps.meta-conf.outputs.labels }} | jq -Rsc 'split(",") | [ .[] | select(length > 0) ]')
-          echo "::set-output name=final_image_labels::$final_image_labels"
+          #final_image_labels=$(echo ${{ steps.meta-conf.outputs.labels }} | jq -Rsc 'split(",") | [ .[] | select(length > 0) ]')
+          #echo "::set-output name=final_image_labels::$final_image_labels"
   list_vars:
     name: List Env Vars
     runs-on: ubuntu-latest
