@@ -83,6 +83,7 @@ jobs:
           echo "image_list: ${{ needs.vars.outputs.image_list }}"
           echo "final_image_name: ${{ needs.vars.outputs.final_image_name }}"
           echo "final_image_tags: ${{ needs.vars.outputs.final_image_tags }}"
+          echo "final_image_labels: ${{ needs.vars.outputs.final_image_labels }}"
 
   build:
     name: Build
@@ -178,6 +179,7 @@ jobs:
           chmod 755 regctl
           tags="${{ needs.vars.outputs.final_image_tags }}"
           IFS=",";for line in $tags; do
+            echo "Retagging ${{ needs.vars.outputs.final_image_name }} to ${line}"
             ./regctl image copy ${{ needs.vars.outputs.final_image_name }} ${line}
           done
 
