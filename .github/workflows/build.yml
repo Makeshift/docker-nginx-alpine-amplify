@@ -167,23 +167,19 @@ jobs:
       - vars
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "matrix.tag: ${{ matrix.tag }}"
-          echo "final_image_name: ${{ needs.vars.outputs.final_image_name }}"
-          echo "image_repo: ${{ env.image_repo }}"
       - name: Login to DockerHub
         uses: docker/login-action@v1.14.1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Retag to ${{ matrix.tag }}
+      - name: Retag
         run: |
           curl -sL https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
           chmod 755 regctl
-          final_image_tags="${{ needs.vars.outputs.final_image_tags }}"
-          IFS=, while read line; do
+          tags="${{ needs.vars.outputs.final_image_tags }}"
+          IFS=",";for line in $tags; do
             ./regctl image copy ${{ needs.vars.outputs.final_image_name }} ${line}
-          done < <(echo $final_image_tags)
+          done
 
   docs:
     name: Update DockerHub Repo Description
