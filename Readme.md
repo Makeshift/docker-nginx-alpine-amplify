@@ -2,6 +2,14 @@
 
 The `nginx:alpine` Docker container, + the Nginx Amplify agent. [Amplify](https://amplify.nginx.com/) is Nginx's (currently) free monitoring service for Nginx installations, which shows various stats and can alarm on downtime.
 
+# tl;dr
+
+Repository on [DockerHub](https://hub.docker.com/r/makeshift27015/nginx-alpine-amplify): `makeshift27015/nginx-alpine-amplify`
+
+```properties
+docker run -p 80:80 -e API_KEY=<amplify_api_key> -e AMPLIFY_IMAGENAME=<some_identifier> makeshift27015/nginx-alpine-amplify
+```
+
 ## Nginx removed the source for Nginx Amplify
 
 In June 2022, Nginx removed the source from the [nginxinc/nginx-amplify-agent](https://github.com/nginxinc/nginx-amplify-agent) repository for unknown reasons. As such, this container got a little bit more complicated and now has to extract the files from one of their releases, which is a bit annoying. Hopefully they'll reply to [my issue](https://github.com/nginxinc/nginx-amplify-doc/issues/55) to make this simpler.
