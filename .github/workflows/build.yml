@@ -2,12 +2,16 @@ name: Build
 
 on:
   push:
-    branches:
-      - master
   repository_dispatch:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * 0"
+
+env:
+  # list of platforms supported by our base image nginx:alpine
+  architectures: '[\"linux/amd64\", \"linux/arm/v6\", \"linux/arm/v7\", \"linux/arm64/v8\", \"linux/ppc64le\", \"linux/s390x\"]'
+  image_name: "nginx-alpine-amplify"
+  image_repo: "makeshift27015/nginx-alpine-amplify"
 
 jobs:
   cancel_redundant:
@@ -18,27 +22,83 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
+  # This dumb job exists because env isn't available in the matrix context, sigh
+  # At least it lets me do some string manipulation with jq, which is always fun
+  # https://docs.github.com/en/actions/learn-github-actions/expressions#fromjson
+  vars:
+    name: Set Env Vars
+    runs-on: ubuntu-latest
+    outputs:
+      architectures: ${{ steps.set.outputs.architectures }}
+      image_list: ${{ steps.set.outputs.image_list }}
+      final_image_name: ${{ steps.set.outputs.final_image_name }}
+      final_image_tags: ${{ steps.meta-conf.outputs.tags }}
+      final_image_labels: ${{ steps.set.outputs.final_image_labels }}
+    steps:
+      # Matricies don't support outputting variables from each run in the matrix, so we work out what the
+      #  image tags are going to be in advance and pass them to the build job
+      - name: Docker meta for manifest (${{ env.image_name }})
+        id: meta-conf
+        uses: docker/metadata-action@v3.7.0
+        with:
+          images: ${{ env.image_repo }}
+          sep-tags: ","
+          sep-labels: ","
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=sha,prefix=
+            # set latest tag for master branch
+            type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
+
+      - name: Set Env Vars
+        id: set
+        run: |
+          tag_prefix="${{ github.sha }}"
+          full_image_prefix="${{ env.image_repo }}:${tag_prefix}"
+          architectures=$(echo ${{ env.architectures }} | \
+            jq -c --arg tag_prefix "$tag_prefix" --arg full_image_prefix "$full_image_prefix" \
+              'map((. | gsub("(/)";"_")) as $underscored | {
+                slashed: ., 
+                underscored: $underscored, 
+                image_name: ($tag_prefix + "-" + $underscored), 
+                full_image_name: ($full_image_prefix + "-" + $underscored) }
+              )
+            '
+          )
+          image_list=$(echo "$architectures" | jq -r '[.[] | .full_image_name] | join(",")')
+          echo "::set-output name=architectures::$architectures"
+          echo "::set-output name=image_list::$image_list"
+          echo "::set-output name=final_image_name::$full_image_prefix"
+          # Overwrite the Nginx maintainer label with our own
+          labels="${{ steps.meta-conf.outputs.labels }},maintainer=Makeshift <github.com/Makeshift & hub.docker.com/u/makeshift27015>"
+          echo "::set-output name=final_image_labels::$labels"
+
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: vars
+    strategy:
+      matrix:
+        architecture: ${{ fromJson(needs.vars.outputs.architectures) }}
     steps:
-      - name: Checkout
+      - name: Checkout (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         uses: actions/checkout@v2
 
-      - name: Set up QEMU
+      - name: Set up QEMU (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: qemu
         uses: docker/setup-qemu-action@v1.2.0
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
 
-      - name: Set up Docker Buildx
+      - name: Set up Docker Buildx (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: buildx
         uses: docker/setup-buildx-action@v1.6.0
-        with:
-          buildkitd-flags: --debug
 
-      - name: Inspect builder
+      - name: Inspect builder (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         run: |
           echo "Name:      ${{ steps.buildx.outputs.name }}"
           echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
@@ -46,48 +106,87 @@ jobs:
           echo "Flags:     ${{ steps.buildx.outputs.flags }}"
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
       - name: Login to DockerHub
-        if: success()
         uses: docker/login-action@v1.14.1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # nginx-alpine-amplify
-      - name: Docker meta (nginx-alpine-amplify)
+      - name: Docker meta (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: meta-conf
         uses: docker/metadata-action@v3.7.0
         with:
-          images: makeshift27015/nginx-alpine-amplify
+          images: ${{ env.image_repo }}
           tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
-            type=sha,prefix=
-            type=sha,prefix=,format=long
-            # set latest tag for master branch
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+            type=raw,value=${{ matrix.architecture.image_name }}
 
-      - name: Push Container (nginx-alpine-amplify)
+      - name: Push Container (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         if: success()
         uses: docker/build-push-action@v2.10.0
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
           labels: ${{ steps.meta-conf.outputs.labels }}
-          # list of platforms supported by our base image nginx:alpine
-          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x
+          platforms: ${{ matrix.architecture.slashed }}
           builder: ${{ steps.buildx.outputs.name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
           pull: true
 
-      - name: Update DockerHub Repo Description (nginx-alpine-amplify)
-        if: success()
+  build_manifest:
+    name: Build Final Manifest
+    needs:
+      - build
+      - vars
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v1.14.1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Create and push manifest images
+        # This only accepts one tag :/ so we need another step that does retags. TODO PR this and add support for multiple tags
+        uses: Noelware/docker-manifest-action@v0.1.0
+        with:
+          base-image: ${{ needs.vars.outputs.final_image_name }}
+          extra-images: ${{ needs.vars.outputs.image_list }}
+          push: true
+
+  retag:
+    name: Retag Images
+    needs:
+      - build_manifest
+      - vars
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v1.14.1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Retag
+        run: |
+          curl -sL https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          chmod 755 regctl
+          tags="${{ needs.vars.outputs.final_image_tags }}"
+          IFS=",";for line in $tags; do
+            echo "Retagging ${{ needs.vars.outputs.final_image_name }} to ${line}"
+            ./regctl image copy ${{ needs.vars.outputs.final_image_name }} ${line}
+          done
+
+  docs:
+    name: Update DockerHub Repo Description
+    runs-on: ubuntu-latest
+    needs: build_manifest
+    if: success() && github.ref_name == 'master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Update DockerHub Repo Description (${{ env.image_name }})
         uses: peter-evans/dockerhub-description@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          repository: makeshift27015/nginx-alpine-amplify
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.image_repo }}
           readme-filepath: Readme.md
           short-description: "Nginx on Alpine with Amplify included, because Nginx itself doesn't offer that"

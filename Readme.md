@@ -21,6 +21,22 @@ However, it should support the following platforms:
 - linux/ppc64le
 - linux/s390x
 
+### Comparison to an 'Official' build
+
+I couldn't find an official build, but assuming you use the base `nginx` image (which is Debian based) on `linux/amd64`, using the official script from [nginxinc/nginx-amplify-agent](https://github.com/nginxinc/nginx-amplify-agent) to install, your Dockerfile ends up looking a bit like this (minus an entrypoint to actually run the agent, additionally this fails because the script immediately tries to use init to start the script, which hangs, and you can't stop it from doing that, _thanks Nginx_, so some hacks are in place):
+```dockerfile
+FROM nginx
+ENV API_KEY=dummy
+RUN apt-get update \
+  && apt-get -y install python3 gnupg \
+  && curl -s https://raw.githubusercontent.com/nginxinc/nginx-amplify-agent/master/packages/install.sh --output install.sh \
+  && chmod +x install.sh \
+  && sed -i 's/\${sudo_cmd} service amplify-agent start > \/dev\/null 2>&1 < \/dev\/null//' install.sh \
+  && yes | ./install.sh || true \
+  && rm -rf /var/lib/apt/lists/*
+```
+... which ends up in a 193MB image. Not too much bigger than the Alpine one, but certainly has a lot more stuff in it I'd rather not be there. Also I'm really stubborn and was annoyed they took away the source repo >:(
+
 ## Usage
 
 Provide these two env vars to the container to enable Amplify:
