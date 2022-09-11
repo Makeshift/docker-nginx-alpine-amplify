@@ -157,7 +157,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Create and push manifest images
-        # This only accepts one tag :/ so we need another step that does retags
+        # This only accepts one tag :/ so we need another step that does retags. TODO PR this and add support for multiple tags
         uses: Noelware/docker-manifest-action@v0.1.0
         with:
           base-image: ${{ needs.vars.outputs.final_image_name }}
