@@ -9,7 +9,13 @@ on:
 
 env:
   # list of platforms supported by our base image nginx:alpine
-  architectures: '[\"linux/amd64\", \"linux/arm/v6\", \"linux/arm/v7\", \"linux/arm64/v8\", \"linux/ppc64le\", \"linux/s390x\"]'
+  architectures:
+    - linux/amd64
+    - linux/arm/v6
+    - linux/arm/v7
+    - linux/arm64/v8
+    - linux/ppc64le
+    - linux/s390x
   image_name: 'nginx-alpine-amplify'
   image_repo: 'makeshift27015/nginx-alpine-amplify'
 
@@ -18,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
+        uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ github.token }}
 
@@ -39,7 +45,7 @@ jobs:
       #  image tags are going to be in advance and pass them to the build job
       - name: Docker meta for manifest (${{ env.image_name }})
         id: meta-conf
-        uses: docker/metadata-action@v3.7.0
+        uses: docker/metadata-action@v4.1.1
         with:
           images: ${{ env.image_repo }}
           sep-tags: ','
@@ -58,7 +64,7 @@ jobs:
         run: |
           tag_prefix="${{ github.sha }}"
           full_image_prefix="${{ env.image_repo }}:${tag_prefix}"
-          architectures=$(echo ${{ env.architectures }} | \
+          architectures=$(echo ${{ toJSON(env.architectures) }} | \
             jq -c --arg tag_prefix "$tag_prefix" --arg full_image_prefix "$full_image_prefix" \
               'map((. | gsub("(/)";"_")) as $underscored | {
                 slashed: .,
@@ -85,18 +91,18 @@ jobs:
         architecture: ${{ fromJson(needs.vars.outputs.architectures) }}
     steps:
       - name: Checkout (${{ env.image_name }}/${{ matrix.architecture.slashed }})
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: qemu
-        uses: docker/setup-qemu-action@v1.2.0
+        uses: docker/setup-qemu-action@v2.1.0
         with:
           image: tonistiigi/binfmt:latest
           platforms: all
 
       - name: Set up Docker Buildx (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: buildx
-        uses: docker/setup-buildx-action@v1.6.0
+        uses: docker/setup-buildx-action@v2.2.1
 
       - name: Inspect builder (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         run: |
@@ -106,14 +112,14 @@ jobs:
           echo "Flags:     ${{ steps.buildx.outputs.flags }}"
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
       - name: Login to DockerHub
-        uses: docker/login-action@v1.14.1
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Docker meta (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: meta-conf
-        uses: docker/metadata-action@v3.7.0
+        uses: docker/metadata-action@v4.1.1
         with:
           images: ${{ env.image_repo }}
           tags: |
@@ -121,7 +127,7 @@ jobs:
 
       - name: Push Container (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         if: success()
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v3.2.0
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
           labels: ${{ steps.meta-conf.outputs.labels }}
@@ -140,13 +146,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Login to DockerHub
-        uses: docker/login-action@v1.14.1
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Create and push manifest images
         # This only accepts one tag :/ so we need another step that does retags. TODO PR this and add support for multiple tags
-        uses: Noelware/docker-manifest-action@v0.1.0
+        uses: Noelware/docker-manifest-action@v0.2.3
         with:
           base-image: ${{ needs.vars.outputs.final_image_name }}
           extra-images: ${{ needs.vars.outputs.image_list }}
@@ -160,7 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Login to DockerHub
-        uses: docker/login-action@v1.14.1
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -181,9 +187,9 @@ jobs:
     if: success() && github.ref_name == 'master'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Update DockerHub Repo Description (${{ env.image_name }})
-        uses: peter-evans/dockerhub-description@v2
+        uses: peter-evans/dockerhub-description@v3.1.2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
