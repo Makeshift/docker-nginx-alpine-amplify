@@ -58,7 +58,7 @@ jobs:
         run: |
           tag_prefix="${{ github.sha }}"
           full_image_prefix="${{ env.image_repo }}:${tag_prefix}"
-          architectures=$(echo ${{ toJSON(env.architectures) }} | \
+          architectures=$(echo ${{ env.architectures }} | \
             jq -c --arg tag_prefix "$tag_prefix" --arg full_image_prefix "$full_image_prefix" \
               'map((. | gsub("(/)";"_")) as $underscored | {
                 slashed: .,
