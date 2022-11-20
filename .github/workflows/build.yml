@@ -133,7 +133,7 @@ jobs:
           pull: true
 
   build_manifest:
-    name: Build Final Manifest
+    name: Set Tags & Descriptions
     needs:
       - build
       - vars
@@ -144,44 +144,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Create and push manifest images
-        # This only accepts one tag :/ so we need another step that does retags. TODO PR this and add support for multiple tags
-        uses: Noelware/docker-manifest-action@v0.2.3
+        uses: Makeshift/docker-manifest-action@master
         with:
-          base-image: ${{ needs.vars.outputs.final_image_name }}
+          base-image: ${{ needs.vars.outputs.final_image_tags }}
           extra-images: ${{ needs.vars.outputs.image_list }}
           push: true
 
-  retag:
-    name: Retag Images
-    needs:
-      - build_manifest
-      - vars
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to DockerHub
-        uses: docker/login-action@v2.1.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Retag
-        run: |
-          curl -sL https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
-          chmod 755 regctl
-          tags="${{ needs.vars.outputs.final_image_tags }}"
-          IFS=",";for line in $tags; do
-            echo "Retagging ${{ needs.vars.outputs.final_image_name }} to ${line}"
-            ./regctl image copy ${{ needs.vars.outputs.final_image_name }} ${line}
-          done
-
-  docs:
-    name: Update DockerHub Repo Description
-    runs-on: ubuntu-latest
-    needs: build_manifest
-    if: success() && github.ref_name == 'master'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
       - name: Update DockerHub Repo Description (${{ env.image_name }})
         uses: peter-evans/dockerhub-description@v3.1.2
         with:
