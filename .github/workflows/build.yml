@@ -127,8 +127,8 @@ jobs:
           labels: ${{ steps.meta-conf.outputs.labels }}
           platforms: ${{ matrix.architecture.slashed }}
           builder: ${{ steps.buildx.outputs.name }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ env.image_name }}-${{ matrix.architecture.underscored }}
+          cache-to: type=gha,mode=max,scope=${{ env.image_name }}-${{ matrix.architecture.underscored }}
           push: true
           pull: true
 
