@@ -5,13 +5,13 @@ on:
   repository_dispatch:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 0"
+    - cron: '0 0 * * 0'
 
 env:
   # list of platforms supported by our base image nginx:alpine
   architectures: '[\"linux/amd64\", \"linux/arm/v6\", \"linux/arm/v7\", \"linux/arm64/v8\", \"linux/ppc64le\", \"linux/s390x\"]'
-  image_name: "nginx-alpine-amplify"
-  image_repo: "makeshift27015/nginx-alpine-amplify"
+  image_name: 'nginx-alpine-amplify'
+  image_repo: 'makeshift27015/nginx-alpine-amplify'
 
 jobs:
   cancel_redundant:
@@ -42,8 +42,8 @@ jobs:
         uses: docker/metadata-action@v3.7.0
         with:
           images: ${{ env.image_repo }}
-          sep-tags: ","
-          sep-labels: ","
+          sep-tags: ','
+          sep-labels: ','
           tags: |
             type=schedule
             type=ref,event=branch
@@ -69,12 +69,12 @@ jobs:
             '
           )
           image_list=$(echo "$architectures" | jq -r '[.[] | .full_image_name] | join(",")')
-          echo "::set-output name=architectures::$architectures"
-          echo "::set-output name=image_list::$image_list"
-          echo "::set-output name=final_image_name::$full_image_prefix"
+          echo "architectures=$architectures" | tee -a $GITHUB_OUTPUT
+          echo "image_list=$image_list" | tee -a $GITHUB_OUTPUT
+          echo "final_image_name=$full_image_prefix" | tee -a $GITHUB_OUTPUT
           # Overwrite the Nginx maintainer label with our own
           labels="${{ steps.meta-conf.outputs.labels }},maintainer=Makeshift <github.com/Makeshift & hub.docker.com/u/makeshift27015>"
-          echo "::set-output name=final_image_labels::$labels"
+          echo "final_image_labels=$labels" | tee -a $GITHUB_OUTPUT
 
   build:
     name: Build
