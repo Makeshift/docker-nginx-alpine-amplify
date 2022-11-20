@@ -3,7 +3,6 @@ services:
   nginx:
     image: makeshift27015/nginx-alpine-amplify
     ports:
-      #
       - "80:80"
     environment:
       # You can either replace the variables ${} entirely with your own values, or
@@ -14,12 +13,12 @@ services:
       - NO_AGENT_LOGS=${NO_AGENT_LOGS-false}
     volumes:
       # Replace the built-in nginx.conf with your own
-      - ./nginx.conf.example:/etc/nginx/nginx.conf
+      - ${PWD}/nginx.conf.example:/etc/nginx/nginx.conf
       # Add additional config
       #  (if your nginx.conf has `include /etc/nginx/conf.d/*.conf;`, the default one does)
-      - ./conf.d/:/etc/nginx/conf.d/
+      - ${PWD}/conf.d/:/etc/nginx/conf.d/
       # Mount logs to the host - be careful of permissions, it must be owned by the nginx user
-      #  which is ID 101 in this container (inherited from nginx:alpine). 
+      #  which is ID 101 in this container (inherited from nginx:alpine).
       #  You can run `chown 101:101 access.log error.log` to fix it.
-      - ./access.log:/var/log/nginx/access.log
-      - ./error.log:/var/log/nginx/error.log
+      - ${PWD}/access.log:/var/log/nginx/access.log
+      - ${PWD}/error.log:/var/log/nginx/error.log

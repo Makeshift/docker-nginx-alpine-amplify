@@ -1,0 +1,18 @@
+# name of threshold level (error | warning | info | style | ignore | none)
+failure-threshold: style
+# list of rules to ignore
+ignored:
+  - DL3007 # Allow the use of 'latest' tags
+  - DL3033 # Allow nonspecific yum install version
+  - DL4006 # Do not force -o pipefail on RUN commands with pipes
+  - DL3008 # Allow nonspecific apt install version
+  - DL3018 # Allow nonspecific apk install version
+  - DL3013 # Allow nonspecific pip install version
+  - DL3016 # Allow nonspecific npm install version
+  - DL3059 # I know when to separate RUN commands
+  - DL3003 # Allow workdir changes without WORKDIR
+  - SC1091 # shellcheck-py has trouble following sourced files
+# do not force labels
+strict-labels: false
+# ignore 'ignore' severity rules
+disable-ignore-pragma: true

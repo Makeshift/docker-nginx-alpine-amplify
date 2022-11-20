@@ -61,9 +61,9 @@ jobs:
           architectures=$(echo ${{ env.architectures }} | \
             jq -c --arg tag_prefix "$tag_prefix" --arg full_image_prefix "$full_image_prefix" \
               'map((. | gsub("(/)";"_")) as $underscored | {
-                slashed: ., 
-                underscored: $underscored, 
-                image_name: ($tag_prefix + "-" + $underscored), 
+                slashed: .,
+                underscored: $underscored,
+                image_name: ($tag_prefix + "-" + $underscored),
                 full_image_name: ($full_image_prefix + "-" + $underscored) }
               )
             '

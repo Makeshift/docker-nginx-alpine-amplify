@@ -12,8 +12,8 @@ RUN	python3 -m venv /opt/venv \
 	# Activate the venv so things actually install in there
 	&& source /opt/venv/bin/activate \
 	# I think installing wheel first allows it to skip a lot of the legacy build stuff, but my Python isn't very good so please correct me if wrong
-	&& pip3 install wheel \
-	&& pip3 install setproctitle greenlet gevent requests ujson netifaces pymysql psutil \
+	&& pip3 install --no-cache-dir wheel \
+	&& pip3 install --no-cache-dir setproctitle greenlet gevent requests ujson netifaces pymysql psutil \
 	# This weirdness is explained below above the ENV
 	&& mv /opt/venv/lib/python3* /opt/venv/lib/python3-custom
 
@@ -40,7 +40,7 @@ RUN mkdir /var/log/amplify-agent \
 # The deb package uses python3 as its site-packages dir, so rather than dealing with them maybe breaking stuff in the future, we just
 #  add it as a source on the _end_ of the pythonpath (so it uses the more up-to-date installed packages from the venv by default)
 # As of the time of writing, the Alpine amd64 repos have Python 3.10 and the arm64 repos have Python 3.9 (making different folder structures)
-#  So, I'm trying to be a bit more version agnostic (rather than pinning to 3.9) by sticking my packages into a custom site-packages dir 
+#  So, I'm trying to be a bit more version agnostic (rather than pinning to 3.9) by sticking my packages into a custom site-packages dir
 #  rather than overwriting stuff that the system Python (or the Amplify Agent) manages.
 # I tried some shenanigans with combining the two directories but it ended up at an identical image size, and this is cleaner anyway.
 ENV PYTHONPATH=/usr/lib/python3-custom/site-packages/:/usr/lib/python3/dist-packages
@@ -49,7 +49,7 @@ ENV PYTHONPATH=/usr/lib/python3-custom/site-packages/:/usr/lib/python3/dist-pack
 COPY --from=build /out/usr/. /usr/
 COPY --from=build /out/etc/amplify-agent/* /etc/amplify-agent/
 COPY --from=build /opt/venv/lib/python3-custom/site-packages/. /usr/lib/python3-custom/site-packages/
-COPY entrypoint.sh /
+COPY 40-nginx-amplify.sh /docker-entrypoint.d/
 COPY nginx.conf.example /etc/nginx/nginx.conf
 
 # The psutil bundled with the agent doesn't seem to work on alpine, so we remove it entirely and force it to use the one from the venv
@@ -60,5 +60,3 @@ EXPOSE 80
 EXPOSE 443
 
 STOPSIGNAL SIGTERM
-
-ENTRYPOINT ["/entrypoint.sh"]

@@ -1,2 +1,7 @@
-docker-compose.yml
-Readme.md
+# Ignore everything
+*
+# Except these files
+!/40-nginx-amplify.sh
+!/nginx.conf.example
+
+# You might need to edit this :)
