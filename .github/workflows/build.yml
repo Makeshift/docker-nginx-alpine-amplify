@@ -133,7 +133,7 @@ jobs:
           pull: true
 
   build_manifest:
-    name: Set Tags & Descriptions
+    name: Create manifests & Tags
     needs:
       - build
       - vars
@@ -152,8 +152,16 @@ jobs:
           extra-images: ${{ needs.vars.outputs.image_list }}
           push: true
 
+  docs:
+    name: Update DockerHub Repo Description
+    runs-on: ubuntu-latest
+    needs: build_manifest
+    if: success() && github.ref_name == 'master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Update DockerHub Repo Description (${{ env.image_name }})
-        uses: peter-evans/dockerhub-description@v3.1.2
+        uses: peter-evans/dockerhub-description@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
