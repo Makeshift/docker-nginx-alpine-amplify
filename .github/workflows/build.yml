@@ -161,7 +161,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Update DockerHub Repo Description (${{ env.image_name }})
-        uses: peter-evans/dockerhub-description@v2
+        uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
