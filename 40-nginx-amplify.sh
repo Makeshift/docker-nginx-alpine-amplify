@@ -29,7 +29,7 @@ if [ -n "${api_key}" ] || [ -n "${amplify_imagename}" ]; then
 
     if [ ! -f "${agent_conf_file}" ] && [ -f "${agent_conf_file}.default" ]; then
         cp -p "${agent_conf_file}.default" "${agent_conf_file}"
-    else
+    elif [ ! -f "${agent_conf_file}" ] && [ ! -f "${agent_conf_file}.default" ]; then
         echo "${agent_conf_file} does not exist and there's no ${agent_conf_file}.default to use! Exiting."
         exit 1
     fi
