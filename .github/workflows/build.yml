@@ -39,7 +39,7 @@ jobs:
       #  image tags are going to be in advance and pass them to the build job
       - name: Docker meta for manifest (${{ env.image_name }})
         id: meta-conf
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v4.3.0
         with:
           images: ${{ env.image_repo }}
           sep-tags: ','
@@ -113,7 +113,7 @@ jobs:
 
       - name: Docker meta (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: meta-conf
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v4.3.0
         with:
           images: ${{ env.image_repo }}
           tags: |
