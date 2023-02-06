@@ -121,7 +121,7 @@ jobs:
 
       - name: Push Container (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         if: success()
-        uses: docker/build-push-action@v3.2.0
+        uses: docker/build-push-action@v4.0.0
         with:
           tags: ${{ steps.meta-conf.outputs.tags }}
           labels: ${{ steps.meta-conf.outputs.labels }}
