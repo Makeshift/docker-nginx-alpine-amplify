@@ -96,7 +96,7 @@ jobs:
 
       - name: Set up Docker Buildx (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         id: buildx
-        uses: docker/setup-buildx-action@v2.2.1
+        uses: docker/setup-buildx-action@v2.4.1
 
       - name: Inspect builder (${{ env.image_name }}/${{ matrix.architecture.slashed }})
         run: |
