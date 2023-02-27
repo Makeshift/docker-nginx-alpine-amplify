@@ -159,7 +159,7 @@ jobs:
     if: success() && github.ref_name == 'master'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Update DockerHub Repo Description (${{ env.image_name }})
         uses: peter-evans/dockerhub-description@v3
         with:
